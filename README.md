@@ -74,3 +74,194 @@ SHAP值分析显示，对居民是否购买商业养老保险具有重要预测�
 
 # 如何运行
 按文件编号顺序依次运行所有代码文件即可得到全部研究结果，主要图表及结果解读均在代码文件中展示。
+
+
+
+
+## 1. Project Overview
+
+### 1.1 Background
+
+China is experiencing rapid population aging, while its three-pillar pension system remains unevenly developed. As the third pillar, commercial pension insurance plays an important role in supplementing retirement security. However, its development remains relatively limited compared with that in many developed economies, leaving considerable room for growth.
+
+The Chinese government has increasingly emphasized the role of digital technologies and data as key drivers of high-quality financial development. Policy initiatives, including the *Guiding Opinions on Advancing the Five Major Areas of Finance* and the *Implementation Plan for High-Quality Development of Digital Finance in the Banking and Insurance Sectors*, provide policy support for the digital transformation of the insurance industry.
+
+Insurance distribution has also shifted from traditional offline sales models toward online marketing and digital platforms. In this context, machine learning and advanced data analytics can help insurers extract value from customer data and identify potential customers more effectively. Understanding the factors associated with commercial pension insurance purchases may help insurers improve marketing efficiency, optimize product design, and enhance customer experience.
+
+### 1.2 Research Objectives and Significance
+
+Against the backdrop of population aging and the development of China's pension system, this project investigates commercial pension insurance purchase behavior using machine learning techniques.
+
+The objectives are to identify characteristics associated with insurance purchase behavior, evaluate the predictive performance of different machine learning models, and interpret the contribution of individual features to model predictions.
+
+The findings may provide data-driven insights for customer identification, targeted marketing, and product development in the insurance industry. They may also contribute to discussions on the development of China's third-pillar pension system.
+
+### 1.3 Research Methods
+
+This project uses data from the Chinese General Social Survey (CGSS) and applies three ensemble learning algorithms:
+
+- Random Forest
+- XGBoost
+- LightGBM
+
+The models are evaluated and compared using classification metrics, with particular attention to recall and F1-score. SHAP analysis and partial dependence plots (PDPs) are used to interpret model predictions and explore how selected features are associated with predicted purchase probabilities.
+
+## 2. Dataset
+
+### 2.1 Data Source
+
+The data come from the 2021 and 2023 waves of the Chinese General Social Survey (CGSS), a nationwide, longitudinal academic survey program that collects information on social, community, family, and individual characteristics across mainland China.
+
+The survey covers a broad range of variables potentially associated with commercial pension insurance purchase behavior, including respondents' insurance participation, demographic characteristics, family structure, social attitudes, and living conditions.
+
+An exploratory analysis of the 2023 survey data, which contains 11,326 observations, revealed substantial missingness in several variables required for this project. This is partly attributable to the survey's use of randomized subsampling for certain questions. For example, the numbers of missing responses for the number of sons and daughters were 4,360 and 4,359, respectively. The corresponding missing counts for new-media and traditional-media usage were 4,347 and 4,350.
+
+Dropping all observations with missing values in these variables would substantially reduce the available sample size. Imputing the missing values could also introduce uncertainty and potentially distort relationships among variables.
+
+To retain a larger number of observations, this project combines the 2021 and 2023 survey data. This decision reflects a trade-off between the benefits of a larger sample and potential differences between survey waves. After merging the two datasets, the combined dataset contains 19,474 observations before subsequent preprocessing.
+
+**Data availability:** The original CGSS datasets are not included in this public repository because of data access restrictions and responsible data-sharing considerations. Please refer to the accompanying data documentation for details.
+
+### 2.2 Variable Selection and Feature Engineering
+
+The project uses one target variable and 22 explanatory variables.
+
+The explanatory variables cover the following areas:
+
+- **Demographic characteristics:** age, marital status, education level, and residential area.
+- **Family characteristics:** household size, number of sons, number of daughters, and number of properties owned by the household.
+- **Intergenerational relationships:** economic support, emotional support, and practical care.
+- **Media use and social interaction:** traditional-media usage, new-media usage, and frequency of social interaction.
+- **Economic and psychological characteristics:** annual household income, happiness, depressive feelings, self-rated health, and financial literacy.
+- **Social security and attitudes:** participation in basic pension insurance, participation in basic medical insurance, and attitudes toward pension provision.
+
+The target variable is `com_endow`, which indicates whether a respondent has purchased commercial pension insurance.
+
+Detailed variable definitions and construction procedures are provided in `1_1_Variable_Description`. Descriptive statistics are presented in `2_x`.
+
+## 3. Methodology
+
+### 3.1 Handling Class Imbalance
+
+The target variable is highly imbalanced, with substantially fewer positive observations (insurance purchasers) than negative observations (non-purchasers).
+
+Under such conditions, machine learning models may become biased toward the majority class and fail to identify positive cases adequately.
+
+To address this issue, the project applies the Synthetic Minority Over-sampling Technique (SMOTE) to the training set. SMOTE generates synthetic minority-class observations to increase the representation of positive cases during model training.
+
+For model evaluation, the original test set is also downsampled by randomly removing a portion of the negative observations. This produces a test set with a more balanced class distribution, allowing the model's ability to identify positive cases to be examined more directly.
+
+However, downsampling changes the class distribution of the test set. Consequently, evaluation metrics calculated on this modified test set may not reflect performance under the original population distribution. In particular, precision and other threshold-dependent metrics should be interpreted with this limitation in mind.
+
+To prevent data leakage, resampling should be performed only after the train-test split, and synthetic samples should be generated exclusively from the training data.
+
+### 3.2 Evaluation Metrics
+
+The project evaluates binary classification performance using the confusion matrix, precision, recall, F1-score, the Receiver Operating Characteristic (ROC) curve, and the Area Under the ROC Curve (AUC).
+
+Accuracy alone may be misleading when the target variable is highly imbalanced. Since identifying potential purchasers is a key objective in insurance marketing, particular attention is paid to recall, which measures the proportion of actual positive cases correctly identified by the model.
+
+In this application, failing to identify a potential purchaser may represent a missed marketing opportunity, whereas contacting a person who ultimately does not purchase insurance may incur additional marketing costs. This motivates a focus on recall, while F1-score is also considered to balance precision and recall.
+
+These trade-offs depend on actual business costs and should ultimately be validated using operational data.
+
+## 4. Key Results
+
+### 4.1 Model Comparison
+
+Among the three machine learning models, XGBoost achieves the highest recall and the strongest overall performance according to the selected evaluation metrics.
+
+XGBoost identifies approximately 72% of the actual positive cases in the evaluation sample, outperforming Random Forest and LightGBM in recall. Its precision is 0.46, indicating that 46% of the observations predicted as purchasers are actual positive cases in the evaluation sample.
+
+Although XGBoost has lower precision than the other two models, its higher recall means that it misses fewer actual purchasers. It also achieves an F1-score of 0.56 and an AUC of 0.76. Based on these results and the project's emphasis on identifying potential purchasers, XGBoost is selected for further interpretation.
+
+Detailed model outputs are provided in `7_0`, `7_1`, `7_2`, and `7_3`.
+
+### 4.2 SHAP Analysis
+
+SHAP analysis is used to examine the contribution of individual features to the model's predictions.
+
+The ten most important features in the XGBoost model are:
+
+1. Education level
+2. Urban residence
+3. Participation in basic medical insurance
+4. Financial literacy
+5. Self-reported depressive feelings
+6. Number of properties owned by the household
+7. New-media usage frequency
+8. Number of daughters
+9. Traditional-media usage frequency
+10. Age
+
+These results indicate that demographic, socioeconomic, health-related, and media-use characteristics contribute to the model's predictions.
+
+SHAP importance reflects a feature's contribution to model predictions. It should not be interpreted as evidence that the feature causes insurance purchase behavior.
+
+Detailed results are provided in `8_1_SHAP_Analysis`.
+
+### 4.3 Partial Dependence Analysis
+
+Partial dependence plots (PDPs) are used to explore how selected features relate to the model's average predicted probability of commercial pension insurance purchase.
+
+The plots suggest positive associations between predicted purchase probability and certain values of education level, depressive-feeling scores, and traditional- and new-media usage. Nonlinear patterns are also observed for the number of daughters, age, and household property ownership.
+
+These patterns describe the behavior of the fitted model rather than causal effects. Their interpretation should also account for potential correlations among explanatory variables and the limitations of partial dependence plots.
+
+Detailed plots and interpretations are provided in `8_2_PDP_Analysis`.
+
+## 5. Main Findings and Practical Implications
+
+### 5.1 Model Selection and Class Imbalance
+
+Handling class imbalance is an important part of this prediction task. In the experiments conducted for this project, applying SMOTE to the training set to achieve a 1:1 class ratio, together with randomly downsampling the test set to a positive-to-negative ratio of approximately 3:7, produced the best overall performance among the approaches tested.
+
+Under this evaluation setup, XGBoost is the best-performing model according to the selected metrics.
+
+These findings are specific to the current experimental design. Because test-set downsampling changes the class distribution, further evaluation on a test set that preserves the original distribution is necessary before drawing conclusions about real-world deployment performance.
+
+### 5.2 Important Predictive Characteristics
+
+The analysis identifies education level, residential area, basic medical insurance participation, financial literacy, household property ownership, depressive feelings, number of daughters, media usage, and age as important predictive features.
+
+Some of these characteristics, such as age, income, property ownership, financial literacy, and residential area, are already relevant to insurance customer segmentation. Other features, including education level, self-reported depressive feelings, and media usage, may provide additional perspectives for understanding differences in predicted purchase behavior.
+
+For insurers, these findings may inform further research into customer segmentation, communication channels, and product design. Any use of personal or sensitive characteristics in marketing should be subject to applicable privacy, data-protection, fairness, and insurance regulations.
+
+### 5.3 Patterns in Predicted Purchase Probability
+
+The partial dependence analysis suggests that respondents with certain characteristics—such as a university education or higher, urban residence, participation in investment activities, ownership of two or more properties, lower reported levels of negative feelings, one daughter, frequent media use, or an age between 55 and 65—may have higher predicted purchase probabilities under the fitted model.
+
+These patterns should be interpreted as model-based associations rather than definitive rules for identifying individual customers. They do not establish that any particular characteristic causes a person to purchase commercial pension insurance.
+
+Before applying these findings in practice, insurers would need to validate them using appropriate business data and assess their effectiveness, fairness, and regulatory compliance.
+
+## 6. Limitations
+
+### 6.1 Class Imbalance and Evaluation Design
+
+The original dataset has a highly imbalanced target variable. Although SMOTE increases the representation of the minority class during training, synthetic observations may not fully capture the characteristics of real purchasers.
+
+Furthermore, downsampling the test set changes the original class distribution and may affect the interpretation of precision, recall, and other evaluation metrics. Future work should include evaluation on a test set that preserves the original distribution and, where appropriate, use additional metrics or cost-sensitive evaluation methods.
+
+### 6.2 Missing Variables and Data Limitations
+
+Due to the limited coverage of available variables and substantial missingness in certain survey questions, some potentially informative features—such as intergenerational economic support, emotional support, practical care, occupation, and other household characteristics—could not be fully incorporated into the final model.
+
+Future research could explore more comprehensive datasets, improved missing-data strategies, and alternative feature combinations to identify additional predictive patterns and improve model performance.
+
+### 6.3 Generalizability to Real-World Insurance Operations
+
+The features used in this project are primarily derived from an academic social survey and previous academic research. Therefore, the findings are more suitable for exploratory analysis than for direct operational deployment.
+
+The actual predictive performance of these models in insurance marketing would need to be validated using appropriately authorized insurance-company data. Such validation would also need to account for differences between survey respondents and real-world customers, as well as changes in marketing practices and consumer behavior over time.
+
+## 7. Reproducibility and How to Run
+
+The repository contains the code and documentation used to demonstrate the project's analytical workflow. The original CGSS datasets are not included because of data access restrictions.
+
+Please refer to the data documentation for information about data availability. If simulated data are provided, they are intended to demonstrate the code structure and workflow only; results obtained from simulated data should not be interpreted as empirical findings based on the original survey data.
+
+For the complete workflow, run the relevant notebooks in the order indicated by their filenames and documentation. The notebooks contain the data-processing steps, model training procedures, evaluation outputs, visualizations, and interpretations.
+
+Because the original data are not included, the complete empirical analysis cannot be reproduced from this public repository alone.
