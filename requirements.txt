@@ -1,0 +1,22 @@
+# Data processing
+pandas
+numpy
+
+# Visualization
+matplotlib
+
+# Machine learning
+scikit-learn
+xgboost
+lightgbm
+imbalanced-learn
+
+# Model interpretation
+shap
+
+# Jupyter environment
+jupyterlab
+ipykernel
+
+# Excel file support (if needed)
+openpyxl
